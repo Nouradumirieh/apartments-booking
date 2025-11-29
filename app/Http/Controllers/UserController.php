@@ -1,64 +1,79 @@
 <?php
 
-namespace App\Http\Controllers;
-
+namespace App\Http\Controllers\Api;
+use Laravel\Sanctum\HasApiTokens;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    
+    public function profile(Request $request)
     {
-        //
+        return response()->json([
+            'user' => $request->user()
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    
+    public function update(Request $request)
     {
-        //
+        $user = $request->user();
+
+        $request->validate([
+            'first_name' => 'nullable|string|max:50',
+            'last_name'  => 'nullable|string|max:50',
+            'dob'        => 'nullable|date',
+        ]);
+
+        $user->update($request->only([
+            'first_name',
+            'last_name',
+            'dob'
+        ]));
+
+        return response()->json([
+            'message' => 'Profile updated',
+            'user' => $user
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    
+    public function uploadAvatar(Request $request)
     {
-        //
+        $request->validate([
+            'avatar' => 'required|image|max:2048'
+        ]);
+
+        $path = $request->file('avatar')->store('avatars', 'public');
+
+        $user = $request->user();
+        $user->avatar = $path;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Avatar uploaded',
+            'avatar_url' => asset('storage/' . $path)
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    
+    public function uploadID(Request $request)
     {
-        //
-    }
+        $request->validate([
+            'id_image' => 'required|image|max:2048'
+        ]);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
+        $path = $request->file('id_image')->store('ids', 'public');
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+        $user = $request->user();
+        $user->id_image = $path;
+        $user->save();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json([
+            'message' => 'ID uploaded',
+            'id_url' => asset('storage/' . $path)
+        ]);
     }
 }
