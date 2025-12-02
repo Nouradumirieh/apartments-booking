@@ -64,7 +64,7 @@ class AuthController extends Controller
         $request->validate([
               'phone' => 'required|string',
     'password' => 'required|string',
-    'role' => 'required|in:tenant,owner',
+   // 'role' => 'required|in:tenant,owner',
         ]);
 
         $user = User::where('phone', $request->phone)->first();
@@ -81,7 +81,7 @@ return response()->json([
     'user' => [
         'id' => $user->id,
         'phone' => $user->phone,
-        'role' => $user->role,
+       // 'role' => $user->role,
         'created_at' => $user->created_at,
     ],
     'access_token' => $token,
