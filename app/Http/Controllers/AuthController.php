@@ -11,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
    
-
+/*
 public function register(RegisterRequest $request)
 {
     
@@ -43,7 +43,7 @@ public function register(RegisterRequest $request)
     ], 201);
 }
 
-
+*/
   
     public function login(Request $request)
 {
