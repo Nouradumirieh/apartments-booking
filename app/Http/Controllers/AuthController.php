@@ -1,18 +1,18 @@
 <?php
 
 namespace App\Http\Controllers;
-use Laravel\Sanctum\HasApiTokens;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\RegisterRequest;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 
-class UserController extends Controller
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+ use App\Http\Requests\RegisterRequest;
+class AuthController extends Controller
 {
-    public function register(RegisterRequest $request)
+   
+/*
+public function register(RegisterRequest $request)
 {
     
     $imageName = time().'_'.$request->id_image->getClientOriginalName();
@@ -43,7 +43,7 @@ class UserController extends Controller
     ], 201);
 }
 
-
+*/
   
     public function login(Request $request)
 {
@@ -89,71 +89,15 @@ class UserController extends Controller
         'token_type' => 'Bearer'
     ]);
 }
-     public function profile(Request $request)
-    {
-        return response()->json([
-            'user' => $request->user()
-        ]);
-    }
+
 
     
-    public function update(Request $request)
+    public function logout(Request $request)
     {
-        $user = $request->user();
-
-        $request->validate([
-            'first_name' => 'nullable|string|max:50',
-            'last_name'  => 'nullable|string|max:50',
-            'dob'        => 'nullable|date',
-        ]);
-
-        $user->update($request->only([
-            'first_name',
-            'last_name',
-            'dob'
-        ]));
+        $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Profile updated',
-            'user' => $user
-        ]);
-    }
-
-    
-    public function uploadAvatar(Request $request)
-    {
-        $request->validate([
-            'avatar' => 'required|image|max:2048'
-        ]);
-
-        $path = $request->file('avatar')->store('avatars', 'public');
-
-        $user = $request->user();
-        $user->avatar = $path;
-        $user->save();
-
-        return response()->json([
-            'message' => 'Avatar uploaded',
-            'avatar_url' => asset('storage/' . $path)
-        ]);
-    }
-
-    
-    public function uploadID(Request $request)
-    {
-        $request->validate([
-            'id_image' => 'required|image|max:2048'
-        ]);
-
-        $path = $request->file('id_image')->store('ids', 'public');
-
-        $user = $request->user();
-        $user->id_image = $path;
-        $user->save();
-
-        return response()->json([
-            'message' => 'ID uploaded',
-            'id_url' => asset('storage/' . $path)
+            'message' => 'Logged out successfully'
         ]);
     }
 }
