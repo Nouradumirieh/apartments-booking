@@ -41,6 +41,7 @@ class UserController extends Controller
         'access_token' => $token,
         'token_type' => 'Bearer',
     ], 201);
+
 }
 
      public function profile(Request $request)
