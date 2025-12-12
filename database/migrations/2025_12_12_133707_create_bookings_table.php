@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reviews', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
+       Schema::create('bookings', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); 
     $table->foreignId('apartment_id')->constrained('apartments')->onDelete('cascade'); 
-    $table->tinyInteger('rating'); 
-    $table->text('comment')->nullable(); 
+    $table->date('start_date'); 
+    $table->date('end_date');  
+    $table->enum('status', ['pending', 'confirmed', 'cancelled', 'modified_pending'])->default('pending');
     $table->timestamps();
-        });
+});
+
     }
 
     /**
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reviews');
+        Schema::dropIfExists('bookings');
     }
 };

@@ -43,52 +43,6 @@ class UserController extends Controller
     ], 201);
 }
 
-
-  
-    public function login(Request $request)
-{
-    $request->validate([
-        'phone' => 'required|string',
-        'password' => 'required|string',
-        // 'role' => 'required|in:tenant,owner',
-    ]);
-
-    $user = User::where('phone', $request->phone)->first();
-
-    if (!$user || !Hash::check($request->password, $user->password)) {
-        throw ValidationException::withMessages([
-            'phone' => ['The provided credentials are incorrect.'],
-        ]);
-    }
-
-    
-    if ($user->status === 'pending') {
-        return response()->json([
-            'message' => 'Your account is not approved by admin yet.'
-        ], 403);
-    }
-
-    if ($user->status === 'rejected') {
-        return response()->json([
-            'message' => 'Your account is rejected.'
-        ], 403);
-    }
-
- 
-    $token = $user->createToken('authToken')->plainTextToken;
-
-    return response()->json([
-        'message' => 'Login successful',
-        'user' => [
-            'id' => $user->id,
-            'phone' => $user->phone,
-            // 'role' => $user->role,
-            'created_at' => $user->created_at,
-        ],
-        'access_token' => $token,
-        'token_type' => 'Bearer'
-    ]);
-}
      public function profile(Request $request)
     {
         return response()->json([
