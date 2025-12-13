@@ -68,4 +68,18 @@ class AdminController extends Controller
             'user' => $user
         ]);
     }
+
+public function allUsers()
+{
+    
+    $users = User::select('id', 'phone', 'role', 'status','id_image', 'created_at')
+                 ->get();
+
+    return response()->json([
+        'users' => $users
+    ]);
+}
+
+
+
 }

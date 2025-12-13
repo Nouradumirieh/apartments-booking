@@ -120,18 +120,35 @@ public function ownerRequests()
         $query->where('owner_id', $ownerId);
     })
     ->whereIn('status', ['pending', 'modified_pending'])
-    ->with(['tenant', 'apartment'])
+    ->with([
+    'tenant:id,first_name,last_name,phone', 
+    'apartment:id,status,title'
+])
+
     ->get();
 
     return response()->json($bookings);
 }
+// cases:
+// - booking not found -> 404
+// - not owner -> 403
+// - pending -> confirm
+// - modified_pending -> apply changes
+
 public function approve($id)
 {
-    $booking = Booking::findOrFail($id);
+    $booking = Booking::with('apartment')->find($id);
 
-    
+    if (!$booking) {
+        return response()->json([
+            'message' => 'Booking not found'
+        ], 404);
+    }
+
     if ($booking->apartment->owner_id !== Auth::id()) {
-        return response()->json(['message' => 'Unauthorized'], 403);
+        return response()->json([
+            'message' => 'Unauthorized'
+        ], 403);
     }
 
     if ($booking->status === 'pending') {
@@ -148,23 +165,43 @@ public function approve($id)
 
     $booking->save();
 
-    return response()->json(['message' => 'Booking approved successfully']);
+    return response()->json([
+        'message' => 'Booking approved successfully'
+    ]);
 }
+
 public function reject($id)
 {
-    $booking = Booking::findOrFail($id);
+    
+    $booking = Booking::with('apartment')->find($id);
 
+    if (!$booking) {
+        return response()->json([
+            'message' => 'Booking not found'
+        ], 404);
+    }
+
+ 
     if ($booking->apartment->owner_id !== Auth::id()) {
-        return response()->json(['message' => 'Unauthorized'], 403);
+        return response()->json([
+            'message' => 'Unauthorized'
+        ], 403);
+    }
+
+
+    if (!in_array($booking->status, ['pending', 'modified_pending'])) {
+        return response()->json([
+            'message' => 'Booking cannot be rejected in its current state'
+        ], 400);
     }
 
     $booking->status = 'rejected';
     $booking->requested_start_date = null;
     $booking->requested_end_date = null;
     $booking->save();
-
-    return response()->json(['message' => 'Booking rejected']);
+    return response()->json([
+        'message' => 'Booking rejected successfully'
+    ]);
 }
-
 
 }

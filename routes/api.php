@@ -19,16 +19,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
  
 });
-   /* Route::post('/profile', [ApiUserController::class, 'profile']);
-    Route::put('/profile/update', [UserController::class, 'update']);
-    Route::post('/profile/avatar', [UserController::class, 'uploadAvatar']);
-    Route::post('/profile/id', [UserController::class, 'uploadID']);*/
+   
+
 
 Route::get('/admin/pending-users', [AdminController::class, 'pendingUsers']);
 Route::post('/admin/approve/{id}', [AdminController::class, 'approveUser']);
 Route::post('/admin/reject/{id}', [AdminController::class, 'rejectUser']);
-
-
+Route::get('/users', [ AdminController::class, 'allUsers']);
 
 // Routes for user profile management
 Route::middleware('auth:sanctum')->group(function () {
@@ -46,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
     Route::get('/owner/booking-requests', [BookingController::class, 'ownerRequests']);
     Route::post('/bookings/{id}/approve', [BookingController::class, 'approve']);
+    Route::post('/bookings/{id}/reject', [BookingController::class, 'reject']);
 });
 Route::get('/apartments', [ApartmentController::class, 'index']); 
 Route::get('/apartments/{id}', [ApartmentController::class, 'show']); 
