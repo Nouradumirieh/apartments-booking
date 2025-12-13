@@ -15,7 +15,15 @@ class Booking extends Model
         'apartment_id',
         'start_date',
         'end_date',
-        'status'
+        'requested_start_date',
+    'requested_end_date',
+        'status',
+    ];
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'requested_start_date' => 'date',
+        'requested_end_date' => 'date',
     ];
    public function tenant()
 {//user_id

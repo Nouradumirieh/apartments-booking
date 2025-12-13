@@ -112,6 +112,59 @@ public function myBookings()
     return response()->json($bookings);
 }
 
+public function ownerRequests()
+{
+    $ownerId = Auth::id();
+
+    $bookings = Booking::whereHas('apartment', function ($query) use ($ownerId) {
+        $query->where('owner_id', $ownerId);
+    })
+    ->whereIn('status', ['pending', 'modified_pending'])
+    ->with(['tenant', 'apartment'])
+    ->get();
+
+    return response()->json($bookings);
+}
+public function approve($id)
+{
+    $booking = Booking::findOrFail($id);
+
+    
+    if ($booking->apartment->owner_id !== Auth::id()) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    if ($booking->status === 'pending') {
+        $booking->status = 'confirmed';
+    }
+
+    if ($booking->status === 'modified_pending') {
+        $booking->start_date = $booking->requested_start_date;
+        $booking->end_date = $booking->requested_end_date;
+        $booking->requested_start_date = null;
+        $booking->requested_end_date = null;
+        $booking->status = 'confirmed';
+    }
+
+    $booking->save();
+
+    return response()->json(['message' => 'Booking approved successfully']);
+}
+public function reject($id)
+{
+    $booking = Booking::findOrFail($id);
+
+    if ($booking->apartment->owner_id !== Auth::id()) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    $booking->status = 'rejected';
+    $booking->requested_start_date = null;
+    $booking->requested_end_date = null;
+    $booking->save();
+
+    return response()->json(['message' => 'Booking rejected']);
+}
 
 
 }
