@@ -11,19 +11,19 @@ class Apartment extends Model
 
 
     protected $fillable = [
-        'owner_id',
-        'province_id',
-        'city_id',
-        'title',
-        'description',
-        'price',
-        'images',
-        'number_of_rooms',
-        'number_of_bathrooms',
-        'address_details',
-        'status',
-    ];
-
+    'owner_id',
+    'province_id',
+    'city_id', 'title',
+    'description',
+    'price', 'images',
+    'number_of_rooms',
+    'number_of_bathrooms',
+    'address_details',
+    'status',
+    'has_elevator',
+    'has_balcony',
+    'area_sqm'
+];
 
     protected $casts = [
         'images' => 'array',

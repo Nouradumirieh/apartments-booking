@@ -6,6 +6,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ApartmentController;
+ use App\Http\Controllers\ProvinceController;
+use App\Http\Controllers\CityController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -40,14 +42,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    Route::prefix('apartments')->group(function () {
-
+        Route::prefix('apartments')->group(function () {
         Route::get('/', [ApartmentController::class, 'index']);
-        Route::get('/{apartment}', [ApartmentController::class, 'show']);
-
-
+        Route::get('/{id}', [ApartmentController::class, 'show']);
         Route::post('/', [ApartmentController::class, 'store']);
+        Route::put('/{id}', [ApartmentController::class, 'update']);
+        Route::delete('/{id}', [ApartmentController::class, 'destroy']);
     });
 
+
 });
+Route::get('/provinces', [ProvinceController::class, 'index']);
+Route::get('/provinces/{province_id}/cities', [CityController::class, 'getByProvince']);
 

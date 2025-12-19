@@ -22,6 +22,10 @@ return new class extends Migration
             $table->decimal('price', 10, 2);
             $table->json('images')->nullable();
             $table->integer('number_of_rooms');
+            $table->integer('number_of_bathrooms');
+            $table->decimal('area_sqm',8,2)->nullable();
+            $table->boolean('has_elevator')->default(false);
+            $table->boolean('has_balcony')->default(false);
             $table->string('address_details');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
