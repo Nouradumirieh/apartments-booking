@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // مهم جداً
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class City extends Model
 {
 
@@ -12,12 +13,12 @@ class City extends Model
         'province_id',
     ];
 
-    public function province()
+    public function province(): BelongsTo
     {
         return $this->belongsTo(Province::class);
     }
 
-    public function apartments()
+    public function apartments(): HasMany
     {
         return $this->hasMany(Apartment::class);
     }

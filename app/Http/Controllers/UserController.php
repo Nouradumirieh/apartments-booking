@@ -15,9 +15,14 @@ class UserController extends Controller
     public function register(RegisterRequest $request)
 {
     
-    $imageName = time().'_'.$request->id_image->getClientOriginalName();
-    $request->id_image->move(public_path('id_images'), $imageName);
+     $idImageName = time() . '_id_' . $request->file('id_image')->getClientOriginalName();
+     $request->file('id_image')->move(public_path('uploads/id_images'), $idImageName);
 
+     $avatarName = null;
+    if ($request->hasFile('avatar')) {//uplods
+        $avatarName = time() . '_avatar_' . $request->file('avatar')->getClientOriginalName();
+        $request->file('avatar')->move(public_path('uploads/avatars'), $avatarName);
+    }
     
     $user = User::create([
         'phone' => $request->phone,
@@ -26,7 +31,8 @@ class UserController extends Controller
         'first_name' => $request->first_name,
         'last_name' => $request->last_name,
         'dob' => $request->dob,
-        'id_image' => $imageName,
+        'id_image' =>$idImageName,
+        'avatar'=>$avatarName ?? 'default_avatar.png',
         'status' => 'pending',
     ]);
 
@@ -35,9 +41,9 @@ class UserController extends Controller
 
    
     return response()->json([
-        'message' => 'Registration successful',
+        'message' =>'User registered successfully. Please wait for admin approval.',
         'user' => $user,
-        'id_image_url' => asset('id_images/'.$imageName),
+        'id_image_url' => asset('uploads/id_images/'.$idImageName),
         'access_token' => $token,
         'token_type' => 'Bearer',
     ], 201);

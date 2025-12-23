@@ -62,4 +62,22 @@ class CityController extends Controller
     {
         //
     }
+  public function getByProvince($province_id)
+    {
+          $cities = City::where('province_id', $province_id)->get();
+
+        if ($cities->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No cities found for this province.',
+                'data' => []
+            ], 200); 
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Cities retrieved successfully for this province.',
+            'data' => $cities
+        ], 200);
+    }
 }

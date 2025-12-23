@@ -65,8 +65,8 @@ public function province()
     public function city()
     {
         return $this->belongsTo(City::class);
-    }
- public function Reviews()
+    }// عدلت اسم التابع من حرف كبير لصغير بدون مااعرف وين عم يستخدم
+ public function reviews()
     {
         return $this->hasMany(Review::class);
     }

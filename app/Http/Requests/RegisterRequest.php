@@ -17,6 +17,7 @@ class RegisterRequest extends FormRequest
             'phone' => 'required|string|unique:users,phone',
             'role'  => 'required|in:tenant,owner',
             'password' => [
+                'confirmed',
                 'required',
                 'string',
                 'min:8',
@@ -29,6 +30,7 @@ class RegisterRequest extends FormRequest
             'last_name' => 'required|string|max:255',
             'dob' => 'required|date',
             'id_image' => 'required|image|mimes:jpg,jpeg,png|max:4096',
+            'avatar'=>'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ];
     }
 }
