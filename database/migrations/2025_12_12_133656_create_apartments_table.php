@@ -27,6 +27,9 @@ return new class extends Migration
     $table->string('address_details');
     $table->decimal('area', 8, 2);
     $table->enum('status', ['available', 'booked', 'inactive'])->default('available');
+    $table->enum('admin_status', ['pending', 'approved', 'rejected'])
+      ->default('pending');
+
     $table->timestamps();
 });
 

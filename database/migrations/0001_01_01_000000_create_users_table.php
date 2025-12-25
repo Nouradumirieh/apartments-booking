@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('phone', 20)->unique();
        // $table->timestamp('phone_verified_at')->nullable();
           //  $table->string('otp_code', 6)->nullable();
-            $table->enum('role', ['tenant', 'owner']);
+            $table->enum('role', ['tenant', 'owner','admin']);
             $table->enum('status', ['pending', 'approved','rejected']);
             $table->string('first_name', 50); 
             $table->string('last_name', 50);

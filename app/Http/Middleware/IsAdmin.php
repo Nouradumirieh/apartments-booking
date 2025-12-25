@@ -5,7 +5,7 @@ use Closure;
 use Illuminate\Http\Request;
 
 class IsAdmin
-{/*
+{
     public function handle(Request $request, Closure $next)
     {
         if ($request->user()->role !== 'admin') {
@@ -13,6 +13,6 @@ class IsAdmin
         }
 
         return $next($request);
-    }*/
+    }
 }
 

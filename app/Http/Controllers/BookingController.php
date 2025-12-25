@@ -87,7 +87,7 @@ public function update(Request $request, $id)
 }
 
 public function destroy($id)
-{
+{//يمنع أي مستأجر من التلاعب بحجوزات الآخرين noura
     $booking = Booking::where('id', $id)
                       ->where('user_id', Auth::id())
                       ->firstOrFail();

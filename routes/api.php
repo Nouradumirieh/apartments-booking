@@ -31,17 +31,34 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/apartments/{id}', [ApartmentController::class, 'destroy']);
 
     
-    Route::post('/bookings', [BookingController::class, 'store']);
-    Route::get('/bookings/my', [BookingController::class, 'myBookings']);
-    Route::put('/bookings/{id}', [BookingController::class, 'update']);
-    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
+   
+   
+   
+   
     Route::get('/owner/booking-requests', [BookingController::class, 'ownerRequests']);
     Route::post('/bookings/{id}/approve', [BookingController::class, 'approve']);
     Route::post('/bookings/{id}/reject', [BookingController::class, 'reject']);
     Route::post('/reviews', [ReviewController::class, 'store']);
 });
 
-Route::get('/admin/pending-users', [AdminController::class, 'pendingUsers']);
-Route::post('/admin/approve/{id}', [AdminController::class, 'approveUser']);
-Route::post('/admin/reject/{id}', [AdminController::class, 'rejectUser']);
+
+Route::middleware(['auth', 'tenant'])->group(function() {
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::put('/bookings/{id}', [BookingController::class, 'update']);
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
+    Route::get('/my-bookings', [BookingController::class, 'myBookings']);
+});
+
+
+Route::middleware(['auth:web', 'admin'])->group(function () {
+    Route::get('/apartments/pending', [ApartmentController::class, 'pendingApartments']);
+    Route::put('/apartments/{id}/approve', [ApartmentController::class, 'approveApartment']);
+    Route::put('/apartments/{id}/reject', [ApartmentController::class, 'rejectApartment']);
+
+    // Users
 Route::get('/users', [ AdminController::class, 'allUsers']);
+Route::get('/pending-users', [AdminController::class, 'pendingUsers']);
+Route::post('/approve/{id}', [AdminController::class, 'approveUser']);
+Route::post('/reject/{id}', [AdminController::class, 'rejectUser']);
+Route::post('/log', [AdminController::class, 'login']);
+});

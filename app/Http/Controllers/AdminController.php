@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Apartment;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-
+use Illuminate\Support\Facades\Auth;
 class AdminController extends Controller
 {
   
@@ -80,6 +82,66 @@ public function allUsers()
     ]);
 }
 
+public function pendingApartments()
+{
+    $apartments = Apartment::where('admin_status', 'pending')
+        ->with(['owner', 'province', 'city'])
+        ->latest()
+        ->get();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Pending apartments retrieved successfully.',
+        'data' => $apartments
+    ]);
+}
+public function approveApartment($id)
+{
+    $apartment = Apartment::find($id);
+
+    if (!$apartment) {
+        return response()->json(['status' => false, 'message' => 'Apartment not found'], 404);
+    }
+
+    $apartment->admin_status = 'approved';
+    $apartment->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Apartment approved successfully.',
+        'data' => $apartment
+    ]);
+}
+public function rejectApartment($id)
+{
+    $apartment = Apartment::find($id);
+
+    if (!$apartment) {
+        return response()->json(['status' => false, 'message' => 'Apartment not found'], 404);
+    }
+
+    $apartment->admin_status = 'rejected';
+    $apartment->save();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Apartment rejected successfully.',
+        'data' => $apartment
+    ]);
+}public function login(Request $request) {
+    $request->validate([
+        'phone' => 'required|string',
+        'password' => 'required|string',
+    ]);
+
+    $credentials = $request->only('phone', 'password');
+
+    if (Auth::guard('web')->attempt($credentials)) {
+        return redirect('/admin/dashboard');
+    }
+
+    return back()->withErrors(['phone' => 'Invalid credentials']);
+}
 
 
 }

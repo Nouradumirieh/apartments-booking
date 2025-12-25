@@ -26,6 +26,7 @@ class Apartment extends Model
         'has_elevator',
         'has_balcony',
         'area',
+        'admin_status',
     ];
 
 

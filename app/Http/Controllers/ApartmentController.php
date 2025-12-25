@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreApartmentRequest;
+use App\Http\Requests\UpdateApartmentRequest;
 use App\Models\Apartment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -10,54 +12,67 @@ use Illuminate\Support\Facades\Auth;
 
 class ApartmentController extends Controller
 {
-    public function index(Request $request)
-    {
-        $query = Apartment::query();
+   public function index(Request $request)
+{
+    $query = Apartment::query()
+        ->where('admin_status', 'approved') 
 
+        
+        ->orderByRaw("CASE WHEN booking_status = 'available' THEN 0 ELSE 1 END")
+        ->orderBy('created_at', 'desc');
 
-        $query->where('status', 'available');
+    
+    $filters = [
+        'province_id' => 'province_id',
+        'city_id' => 'city_id',
+        'max_price' => 'price',
+        'min_rooms' => 'number_of_rooms',
+        'has_elevator' => 'has_elevator'
+    ];
 
-
-        if ($request->has('province_id')) {
-            $query->where('province_id', $request->province_id);
+    foreach ($filters as $key => $column) {
+        if ($request->filled($key)) {
+            switch ($key) {
+                case 'max_price':
+                    $query->where($column, '<=', $request->$key);
+                    break;
+                case 'min_rooms':
+                    $query->where($column, '>=', $request->$key);
+                    break;
+                case 'has_elevator':
+                    $query->where($column, $request->$key ? 1 : 0);
+                    break;
+                default:
+                    $query->where($column, $request->$key);
+                    break;
+            }
         }
-
-        if ($request->has('city_id')) {
-            $query->where('city_id', $request->city_id);
-        }
-
-        if ($request->has('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
-
-
-        if ($request->has('min_rooms')) {
-            $query->where('number_of_rooms', '>=', $request->min_rooms);
-        }
-
-        if ($request->has('has_elevator')) {
-            $query->where('has_elevator', $request->has_elevator);
-        }
-
-
-        $query->with(['owner', 'province', 'city']);
-        $query->latest();
-
-        $apartments = $query->paginate(15);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Apartments list retrieved successfully.',
-            'data' => $apartments
-        ]);
     }
+
+    
+    $query->with(['owner', 'province', 'city']);
+
+    
+    $apartments = $query->paginate(15);
+
+    
+    $apartments->getCollection()->transform(function ($apartment) {
+        $apartment->is_booked = $apartment->booking_status === 'booked';
+        return $apartment;
+    });
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Apartments list retrieved successfully.',
+        'data' => $apartments
+    ]);
+}
 
     public function show($id)
     {
-
+//هاد بيعرض - حتى اللي مو مقبولة من الادمن noura
         $apartment = Apartment::with(['owner', 'province', 'city'])
-            ->where('id', $id)
-            ->first();
+            ->find($id);
 
         if (!$apartment) {
             return response()->json([
@@ -65,7 +80,7 @@ class ApartmentController extends Controller
                 'message' => 'Apartment not found.'
             ], 404);
         }
-
+ $apartment->is_booked = $apartment->booking_status === 'booked';
         return response()->json([
             'status' => true,
             'message' => 'Apartment details retrieved successfully.',
@@ -73,43 +88,10 @@ class ApartmentController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreApartmentRequest $request)
     {
-        $user = Auth::user();
-
-
-        if (!$user || $user->role !== 'owner') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Not authorized. Only owners can add apartments.'
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'city_id' => 'required|exists:cities,id',
-            'province_id' => 'required|exists:provinces,id',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric|min:1',
-            'address_details' => 'required|string',
-            'number_of_rooms' => 'required|integer|min:1',
-            'number_of_bathrooms' => 'required|integer|min:1',
-            'area' => 'required|numeric|min:10',
-            'has_elevator' => 'required|boolean',
-            'has_balcony' => 'required|boolean',
-            'images' => 'required|array|min:1|max:5',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data verification failed.',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $image_paths = [];
+        $user = $request->user();
+      $image_paths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $path = $image->store('apartments_images', 'public');
@@ -130,6 +112,7 @@ class ApartmentController extends Controller
             'has_elevator' => $request->has_elevator,
             'has_balcony' => $request->has_balcony,
             'images' => $image_paths,
+               'admin_status' => 'pending',
         ]);
 
         return response()->json([
@@ -139,23 +122,55 @@ class ApartmentController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, $id)
-    {
-        $apartment = Apartment::find($id);
-
-        if (!$apartment) {
-            return response()->json(['message' => 'The apartment does not exist'], 404);
-        }
-
-
-        if (Auth::id() !== $apartment->owner_id) {
-            return response()->json(['message' => 'Unauthorized.'], 403);
-        }
-
-        $apartment->update($request->all());
-
-        return response()->json(['message' => 'Edited successfully', 'data' => $apartment], 200);
+    public function update(UpdateApartmentRequest $request, $id)
+{
+    $apartment = Apartment::find($id);
+     
+    
+    if (!$apartment) {
+        return response()->json(['status' => false, 'message' => 'Apartment not found'], 404);
     }
+
+    /*
+    if (Auth::id() !== $apartment->owner_id) {
+        return response()->json(['status' => false, 'message' => 'Unauthorized access.'], 403);
+    }*/
+
+
+    
+
+    
+    $data = $request->except('images'); 
+
+    if ($request->hasFile('images')) {
+        
+        if ($apartment->images) {
+            foreach ($apartment->images as $old_image_url) {
+                $old_path = str_replace('/storage/', '', $old_image_url);
+                Storage::disk('public')->delete($old_path);
+            }
+        }
+
+        
+        $image_paths = [];
+        foreach ($request->file('images') as $image) {
+            $path = $image->store('apartments_images', 'public');
+            $image_paths[] = Storage::url($path);
+        }
+        $data['images'] = $image_paths;
+    }
+
+    
+    $data['admin_status'] = 'pending';
+
+    $apartment->update($data);
+
+    return response()->json([
+        'status' => true, 
+        'message' => 'Apartment updated successfully and under review.', 
+        'data' => $apartment
+    ], 200);
+}
 
     public function destroy($id)
     {
