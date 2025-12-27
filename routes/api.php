@@ -50,6 +50,7 @@ Route::middleware(['auth', 'tenant'])->group(function() {
 });
 
 
+/*
 Route::middleware(['auth:web', 'admin'])->group(function () {
     Route::get('/apartments/pending', [ApartmentController::class, 'pendingApartments']);
     Route::put('/apartments/{id}/approve', [ApartmentController::class, 'approveApartment']);
@@ -60,8 +61,8 @@ Route::get('/users', [ AdminController::class, 'allUsers']);
 Route::get('/pending-users', [AdminController::class, 'pendingUsers']);
 Route::post('/approve/{id}', [AdminController::class, 'approveUser']);
 Route::post('/reject/{id}', [AdminController::class, 'rejectUser']);
-Route::post('/log', [AdminController::class, 'login']);
-});
+//Route::post('/log', [AdminController::class, 'login']);
+});*/
 Route::middleware(['auth', 'tenant'])->group(function () {
 
     Route::post('/reviews', [ReviewController::class, 'store']);
@@ -79,7 +80,7 @@ Route::get('/apartments/{apartment}/reviews', [ReviewController::class, 'apartme
 
 Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus']);
 
-/*
+
 Route::post('/update-fcm-token', function (Request $request) {
     $request->validate([
         'fcm_token' => 'required|string',
@@ -90,4 +91,4 @@ Route::post('/update-fcm-token', function (Request $request) {
     $user->update(['fcm_token' => $request->fcm_token]);
 
     return response()->json(['message' => 'Token updated successfully']);
-});*/
+});

@@ -9,7 +9,26 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 class AdminController extends Controller
 {
-  
+   public function loginadmin(Request $request) {
+        $request->validate([
+            'phone' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $credentials = $request->only('phone', 'password');
+
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            if ($user->role !== 'admin') {
+                Auth::logout();
+                return back()->withErrors(['phone' => 'Not an admin account']);
+            }
+            return redirect('/admin/dashboard');
+        }
+
+        return back()->withErrors(['phone' => 'Invalid credentials']);
+    }
+    
  public function pendingUsers()
 {
     $users = User::where('status', 'pending')
@@ -62,6 +81,7 @@ class AdminController extends Controller
     if ($user->status === 'rejected') {
         return response()->json(['message' => 'User is already rejected'], 400);
     }
+    
         $user->status = 'rejected';
         $user->save();
 
@@ -70,14 +90,20 @@ class AdminController extends Controller
             'user' => $user
         ]);
     }
-
 public function allUsers()
 {
-    
-    $users = User::select('id', 'phone', 'role', 'status','id_image', 'created_at')
+    // Check if user is logged in to avoid errors
+    if (!Auth::check()) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $users = User::where('id', '!=', Auth::id()) // Use Auth::id() instead of auth()->id()
+                 ->select('id', 'phone', 'role', 'status', 'id_image', 'created_at')
+                 ->latest()
                  ->get();
 
     return response()->json([
+        'status' => 'success',
         'users' => $users
     ]);
 }
@@ -128,20 +154,34 @@ public function rejectApartment($id)
         'message' => 'Apartment rejected successfully.',
         'data' => $apartment
     ]);
-}public function login(Request $request) {
-    $request->validate([
-        'phone' => 'required|string',
-        'password' => 'required|string',
-    ]);
-
-    $credentials = $request->only('phone', 'password');
-
-    if (Auth::guard('web')->attempt($credentials)) {
-        return redirect('/admin/dashboard');
-    }
-
-    return back()->withErrors(['phone' => 'Invalid credentials']);
 }
 
+public function deleteUser($id)
+{
+    try {
+        // Find the user or fail with 404
+        $user = User::findOrFail($id);
+        
+        // Prevent admin from deleting themselves
+        if ($user->id === Auth::id()) {
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'You cannot delete your own account'
+            ], 403);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User deleted successfully'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Something went wrong while deleting'
+        ], 500);
+    }
+}
 
 }

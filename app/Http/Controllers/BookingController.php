@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Firebase\FirebaseService;
 use App\Models\Booking;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
