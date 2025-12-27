@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('id_image', 255);
             $table->string('password');
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('fcm-token')->nullable();
            $table->timestamps();
         });
 

@@ -62,3 +62,32 @@ Route::post('/approve/{id}', [AdminController::class, 'approveUser']);
 Route::post('/reject/{id}', [AdminController::class, 'rejectUser']);
 Route::post('/log', [AdminController::class, 'login']);
 });
+Route::middleware(['auth', 'tenant'])->group(function () {
+
+    Route::post('/reviews', [ReviewController::class, 'store']);
+
+    
+    Route::put('/reviews/{review}', [ReviewController::class, 'update']);
+
+    
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+});
+
+
+Route::get('/apartments/{apartment}/reviews', [ReviewController::class, 'apartmentReviews']);
+
+
+Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus']);
+
+/*
+Route::post('/update-fcm-token', function (Request $request) {
+    $request->validate([
+        'fcm_token' => 'required|string',
+        'user_id' => 'required|exists:users,id',
+    ]);
+
+    $user = \App\Models\User::find($request->user_id);
+    $user->update(['fcm_token' => $request->fcm_token]);
+
+    return response()->json(['message' => 'Token updated successfully']);
+});*/

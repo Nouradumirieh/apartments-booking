@@ -26,7 +26,9 @@ class User extends Authenticatable
         'dob',
         'avatar',
         'id_image',
-        'password'
+        'password',
+        'fcm_token',
+
     ];
 
     /**

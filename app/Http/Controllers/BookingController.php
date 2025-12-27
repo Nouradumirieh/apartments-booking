@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Firebase\FirebaseService;
 use App\Models\Booking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -201,6 +201,46 @@ public function reject($id)
     $booking->save();
     return response()->json([
         'message' => 'Booking rejected successfully'
+    ]);
+}
+public function updateStatus(Request $request, $id)
+{
+    $booking = Booking::findOrFail($id);
+    $oldStatus = $booking->status;
+    $newStatus = $request->status;
+    // Update the status in database
+    $booking->update(['status' => $newStatus]);
+
+    // Send notification only if status has actually changed
+    if ($oldStatus != $newStatus) {
+        $user = User::find($booking->user_id);
+
+        if ($user && $user->fcm_token) {
+            $firebaseService = new FirebaseService();
+            
+            $title = "Booking Update";
+            
+            // Task: Set different body message for each status
+            $body = match ($newStatus) {
+                'accepted' => "Great news! Your booking has been accepted.",
+                'rejected' => "We are sorry, your booking has been rejected.",
+                'pending'  => "Your booking is now under review.",
+                'canceled' => "Your booking has been successfully canceled.",
+                default    => "Your booking status is now: " . $newStatus,
+            };
+            
+            $data = [
+                'booking_id' => (string)$booking->id,
+                'status' => $newStatus,
+            ];
+
+            $firebaseService->sendNotification($user->fcm_token, $title, $body, $data);
+        }
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Booking updated and notification sent'
     ]);
 }
 
