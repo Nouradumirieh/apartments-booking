@@ -7,7 +7,7 @@ use App\Http\Controllers\{
     BookingController, CityController, ProvinceController, 
     ReviewController, UserController
 };
-
+use App\Http\Middleware\IsTenant;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [UserController::class, 'register']);
@@ -41,14 +41,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store']);
 });
 
+/*
+Route::middleware(['auth:sanctum', 'tenant'])->group(function() {
+    Route::post('/bookings', [BookingController::class, 'store']);
+    Route::put('/bookings/{id}', [BookingController::class, 'update']);
+    Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
+    Route::get('/my-bookings', [BookingController::class, 'myBookings']);
+});*/
 
-Route::middleware(['auth', 'tenant'])->group(function() {
+Route::middleware(['auth:sanctum', IsTenant::class])->group(function() {
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::put('/bookings/{id}', [BookingController::class, 'update']);
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
     Route::get('/my-bookings', [BookingController::class, 'myBookings']);
 });
-
 
 /*
 Route::middleware(['auth:web', 'admin'])->group(function () {
@@ -63,7 +69,7 @@ Route::post('/approve/{id}', [AdminController::class, 'approveUser']);
 Route::post('/reject/{id}', [AdminController::class, 'rejectUser']);
 //Route::post('/log', [AdminController::class, 'login']);
 });*/
-Route::middleware(['auth', 'tenant'])->group(function () {
+Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
 
     Route::post('/reviews', [ReviewController::class, 'store']);
 
@@ -72,6 +78,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+
 });
 
 
@@ -92,3 +99,4 @@ Route::post('/update-fcm-token', function (Request $request) {
 
     return response()->json(['message' => 'Token updated successfully']);
 });
+Route::get('/apartments/{apartment}/reviews', [ReviewController::class, 'show']);

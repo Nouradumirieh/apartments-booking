@@ -28,11 +28,26 @@ class Apartment extends Model
         'area',
         'admin_status',
     ];
+protected $casts = [
+    'has_elevator' => 'boolean',
+    'price' => 'float',
+    'area' => 'float',
+    'images' => 'array',
+];
 
+public function getImagesAttribute($images)
+{
+    $images = is_array($images) ? $images : json_decode($images, true);
 
-    protected $casts = [
-        'images' => 'array',
-    ];
+    return collect($images)->map(function ($img) {
+        
+        $img = str_replace('\\', '/', $img);
+
+        $img = preg_replace('#^/?storage/?#', '', $img);
+
+        return asset('storage/'.$img);
+    })->toArray();
+}
 
 
 

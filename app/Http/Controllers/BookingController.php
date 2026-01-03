@@ -12,8 +12,9 @@ class BookingController extends Controller
     public function checkAvailability($apartment_id, $start_date, $end_date)
 {
     return !Booking::where('apartment_id', $apartment_id)
-        ->where('status', '!=', 'cancelled') 
-        ->where(function($query) use ($start_date, $end_date) {
+       ->where('status', '!=', 'cancelled') 
+      
+    ->where(function($query) use ($start_date, $end_date) {
             $query->whereBetween('start_date', [$start_date, $end_date])
                   ->orWhereBetween('end_date', [$start_date, $end_date])
                   ->orWhere(function($q) use ($start_date, $end_date) {

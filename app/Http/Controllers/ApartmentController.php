@@ -18,7 +18,7 @@ class ApartmentController extends Controller
         ->where('admin_status', 'approved') 
 
         
-        ->orderByRaw("CASE WHEN booking_status = 'available' THEN 0 ELSE 1 END")
+      //  ->orderByRaw("CASE WHEN booking_status = 'available' THEN 0 ELSE 1 END")
         ->orderBy('created_at', 'desc');
 
     
@@ -50,7 +50,12 @@ class ApartmentController extends Controller
     }
 
     
-    $query->with(['owner', 'province', 'city']);
+  $query->with([
+    'owner:id,first_name,last_name',
+    'province:id,name',
+    'city:id,name'
+]);
+
 
     
     $apartments = $query->paginate(15);
@@ -70,8 +75,9 @@ class ApartmentController extends Controller
 
     public function show($id)
     {
-//هاد بيعرض - حتى اللي مو مقبولة من الادمن noura
+
         $apartment = Apartment::with(['owner', 'province', 'city'])
+        ->where('admin_status', 'approved')
             ->find($id);
 
         if (!$apartment) {
@@ -91,13 +97,24 @@ class ApartmentController extends Controller
     public function store(StoreApartmentRequest $request)
     {
         $user = $request->user();
-      $image_paths = [];
+      /*$image_paths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $path = $image->store('apartments_images', 'public');
                 $image_paths[] = Storage::url($path);
-            }
-        }
+            
+        }*/
+ $image_paths = [];
+
+if ($request->hasFile('images')) {
+    foreach ($request->file('images') as $image) {
+        $path = $image->store('apartments', 'public');
+        $image_paths[] = Storage::url($path);
+        // مثال: /storage/apartments/abc123.jpg
+    }
+}
+
+
         $apartment = Apartment::create([
             'owner_id' => $user->id,
             'city_id' => $request->city_id,
@@ -144,20 +161,24 @@ class ApartmentController extends Controller
 
     if ($request->hasFile('images')) {
         
-        if ($apartment->images) {
-            foreach ($apartment->images as $old_image_url) {
-                $old_path = str_replace('/storage/', '', $old_image_url);
-                Storage::disk('public')->delete($old_path);
-            }
-        }
+      if ($apartment->images) {
+    foreach ($apartment->images as $imageUrl) {
+        $path = str_replace('/storage/', '', $imageUrl);
+        Storage::disk('public')->delete($path);
+    }
+}
+
 
         
-        $image_paths = [];
-        foreach ($request->file('images') as $image) {
-            $path = $image->store('apartments_images', 'public');
-            $image_paths[] = Storage::url($path);
-        }
-        $data['images'] = $image_paths;
+       $image_paths = [];
+
+foreach ($request->file('images') as $image) {
+    $path = $image->store('apartments', 'public');
+    $image_paths[] = Storage::url($path);
+}
+
+$data['images'] = $image_paths;
+
     }
 
     

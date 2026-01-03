@@ -67,10 +67,20 @@ public function store(Request $request)
     /**
      * Display the specified resource.
      */
-    public function show(Review $review)
-    {
-        //
-    }
+   public function show($apartmentId)
+{
+    $reviews = Review::where('apartment_id', $apartmentId)
+        ->with('user:id,first_name,last_name')
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Apartment reviews retrieved successfully',
+        'data' => $reviews
+    ]);
+}
+
 
     /**
      * Show the form for editing the specified resource.
