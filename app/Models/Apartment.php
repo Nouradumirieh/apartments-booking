@@ -39,7 +39,20 @@ class Apartment extends Model
 
 
 
+Public function getImagesAttribute($value)
+{
+    // فك تشفير المصفوفة المخزنة في قاعدة البيانات
+    $images = json_decode($value, true) ?: [];
 
+    return array_map(function ($image) {
+        // إذا كان الرابط كاملاً أصلاً (يبدأ بـ http) نتركه كما هو
+        if (str_starts_with($image, 'http')) {
+            return $image;
+        }
+        // إضافة رابط السيرفر الأساسي ومسار التخزين
+        return url('storage/' . $image);
+    }, $images);
+}
 
 
 
