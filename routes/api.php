@@ -32,7 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     
    
-   
+   Route::get('/my-properties', [ApartmentController::class, 'myProperties']);
    
    
     Route::get('/owner/booking-requests', [BookingController::class, 'ownerRequests']);

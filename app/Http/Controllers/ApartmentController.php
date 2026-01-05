@@ -62,7 +62,9 @@ class ApartmentController extends Controller
 
     
     $apartments->getCollection()->transform(function ($apartment) {
-        $apartment->is_booked = $apartment->booking_status === 'booked';
+      //  $apartment->is_booked = $apartment->booking_status === 'booked';
+      $apartment->is_booked = $apartment->status === 'booked';
+
         return $apartment;
     });
 
@@ -86,7 +88,9 @@ class ApartmentController extends Controller
                 'message' => 'Apartment not found.'
             ], 404);
         }
- $apartment->is_booked = $apartment->booking_status === 'booked';
+ //$apartment->is_booked = $apartment->booking_status === 'booked';
+ $apartment->is_booked = $apartment->status === 'booked';
+
         return response()->json([
             'status' => true,
             'message' => 'Apartment details retrieved successfully.',
@@ -208,4 +212,91 @@ $data['images'] = $image_paths;
         $apartment->delete();
         return response()->json(['message' => 'Deleted successfully'], 200);
     }
+
+
+
+    /*
+public function myProperties(Request $request)
+{
+    $user = Auth::user();
+
+    
+    if ($user->role !== 'owner') {
+        return response()->json([
+            'status' => false,
+            'message' => 'Unauthorized. Only owners can access their properties.'
+        ], 403);
+    }
+
+    $apartments = Apartment::where('owner_id', $user->id)
+        ->with([
+            'province:id,name',
+            'city:id,name'
+        ])
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+    
+    $apartments->getCollection()->transform(function ($apartment) {
+        $apartment->is_booked = $apartment->status === 'booked';
+        return $apartment;
+    });
+
+    return response()->json([
+        'status' => true,
+        'message' => 'My apartments retrieved successfully.',
+        'data' => $apartments
+    ]);
+}*/
+
+public function myProperties(Request $request)
+{
+    $user = Auth::user();
+
+    
+    if ($user->role !== 'owner') {
+        return response()->json([
+            'status' => false,
+            'message' => 'Unauthorized. Only owners can access their properties.',
+            'data' => null
+        ], 403);
+    }
+
+    $apartments = Apartment::where('owner_id', $user->id)
+        ->with([
+            'province:id,name',
+            'city:id,name'
+        ])
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+
+    
+    if ($apartments->total() === 0) {
+        return response()->json([
+            'status' => true,
+            'message' => 'You do not have any apartments yet.',
+            'data' => []
+        ], 200);
+    }
+
+    
+    $apartments->getCollection()->transform(function ($apartment) {
+        $apartment->is_booked = $apartment->status === 'booked';
+        return $apartment;
+    });
+
+    return response()->json([
+        'status' => true,
+        'message' => 'My apartments retrieved successfully.',
+        'data' => $apartments
+    ], 200);
+}
+
+
+
+
+
+
+
+    
 }
