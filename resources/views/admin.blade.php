@@ -92,15 +92,28 @@
 </head>
 <body>
 
-<div class="hero-section">
-    <div class="container">
+<div class="hero-section d-flex justify-content-between align-items-center px-4">
+    <div>
         <h1 class="fw-bold">Welcome, Admin</h1>
         <p class="opacity-75">Manage your system users and pending requests efficiently.</p>
     </div>
+    <div>
+        <form method="POST" action="{{ route('admin.logout') }}">
+            @csrf
+            <button type="submit" class="btn btn-danger">
+                Logout
+            </button>
+        </form>
+    </div>
 </div>
 
+
 <div class="container">
-    
+       <div class="d-flex justify-content-end mb-3">
+        <a href="{{ route('admin.pending-apartments') }}" class="btn btn-primary">
+            View Pending Apartments
+        </a>
+    </div>
     <div class="card">
         <div class="card-header">
             <h3>Pending Requests</h3>

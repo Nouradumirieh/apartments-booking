@@ -28,7 +28,18 @@ class AdminController extends Controller
 
         return back()->withErrors(['phone' => 'Invalid credentials']);
     }
-    
+   
+
+public function logoutadmin(Request $request)
+{
+    Auth::logout();
+
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('login');
+}
+
  public function pendingUsers()
 {
     $users = User::where('status', 'pending')
