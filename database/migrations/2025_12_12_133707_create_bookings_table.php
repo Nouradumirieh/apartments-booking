@@ -18,7 +18,7 @@ return new class extends Migration
     $table->date('start_date'); 
     $table->date('end_date');  
     $table->date('requested_start_date')->nullable();
-     $table->date('requested_end_date')->nullable();
+    $table->date('requested_end_date')->nullable();
 
     $table->enum('status', ['pending', 'confirmed', 'cancelled', 'modified_pending','rejected'])->default('pending');
     
