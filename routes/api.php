@@ -7,6 +7,7 @@ use App\Http\Controllers\{
     BookingController, CityController, ProvinceController, 
     ReviewController, UserController
 };
+use App\Http\Controllers\NotificationController;
 use App\Http\Middleware\IsTenant;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -54,6 +55,18 @@ Route::middleware(['auth:sanctum', IsTenant::class])->group(function() {
     Route::put('/bookings/{id}', [BookingController::class, 'update']);
     Route::delete('/bookings/{id}', [BookingController::class, 'destroy']);
     Route::get('/my-bookings', [BookingController::class, 'myBookings']);
+
+
+
+    
+    Route::post('/reviews', [ReviewController::class, 'store']);
+
+    
+    Route::put('/reviews/{review}', [ReviewController::class, 'update']);
+
+    
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
+
 });
 
 /*
@@ -69,23 +82,12 @@ Route::post('/approve/{id}', [AdminController::class, 'approveUser']);
 Route::post('/reject/{id}', [AdminController::class, 'rejectUser']);
 //Route::post('/log', [AdminController::class, 'login']);
 });*/
-Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
-
-    Route::post('/reviews', [ReviewController::class, 'store']);
-
-    
-    Route::put('/reviews/{review}', [ReviewController::class, 'update']);
-
-    
-    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy']);
-
-});
 
 
 Route::get('/apartments/{apartment}/reviews', [ReviewController::class, 'apartmentReviews']);
 
 
-Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus']);
+//Route::post('/bookings/{id}/status', [BookingController::class, 'updateStatus']);
 
 
 Route::post('/update-fcm-token', function (Request $request) {
@@ -100,3 +102,6 @@ Route::post('/update-fcm-token', function (Request $request) {
     return response()->json(['message' => 'Token updated successfully']);
 });
 Route::get('/apartments/{apartment}/reviews', [ReviewController::class, 'show']);
+
+
+Route::get('/send-test-notification/{userId}', [NotificationController::class, 'testNotification']);

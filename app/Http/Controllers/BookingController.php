@@ -6,9 +6,14 @@ use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\NotificationController;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
+    /*
     public function checkAvailability($apartment_id, $start_date, $end_date)
 {
     return !Booking::where('apartment_id', $apartment_id)
@@ -24,7 +29,25 @@ class BookingController extends Controller
         })
         ->exists();
 }
-
+*/
+public function checkAvailability($apartment_id, $start_date, $end_date, $excludeBookingId = null)
+{
+    return !Booking::where('apartment_id', $apartment_id)
+        ->where('status', '!=', 'cancelled')
+        ->where('status', '!=', 'rejected') // استثناء المرفوض أيضاً
+        ->when($excludeBookingId, function($query) use ($excludeBookingId) {
+            return $query->where('id', '!=', $excludeBookingId); // استثناء الحجز الحالي
+        })
+        ->where(function($query) use ($start_date, $end_date) {
+            $query->whereBetween('start_date', [$start_date, $end_date])
+                  ->orWhereBetween('end_date', [$start_date, $end_date])
+                  ->orWhere(function($q) use ($start_date, $end_date) {
+                      $q->where('start_date', '<=', $start_date)
+                        ->where('end_date', '>=', $end_date);
+                  });
+        })
+        ->exists();
+}
 public function store(Request $request)
 {
     $request->validate([
@@ -54,7 +77,7 @@ public function store(Request $request)
     return response()->json($booking, 201);
 }
 
-
+/*
 public function update(Request $request, $id)
 {
     $booking = Booking::where('id', $id)
@@ -87,7 +110,44 @@ public function update(Request $request, $id)
 
     return response()->json($booking);
 }
+*/
+public function update(Request $request, $id)
+{
+    $booking = Booking::where('id', $id)
+                      ->where('user_id', Auth::id())
+                      ->firstOrFail();
 
+    $request->validate([
+        'start_date' => 'required|date',
+        'end_date' => 'required|date|after_or_equal:start_date',
+    ]);
+
+    // نمرر الـ ID هنا لكي لا يصطدم الحجز الجديد بالقديم في قاعدة البيانات
+    $available = $this->checkAvailability(
+        $booking->apartment_id,
+        $request->start_date,
+        $request->end_date,
+        $id 
+    );
+
+    if (!$available) {
+        return response()->json([
+            'message' => 'This apartment is not available for the selected dates.'
+        ], 422);
+    }
+
+    $booking->update([
+        'requested_start_date' => $request->start_date,
+        'requested_end_date' => $request->end_date,
+        'status' => 'modified_pending', 
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Modification request sent to owner',
+        'booking' => $booking
+    ]);
+}
 public function destroy($id)
 {//يمنع أي مستأجر من التلاعب بحجوزات الآخرين noura
     $booking = Booking::where('id', $id)
@@ -166,11 +226,17 @@ public function approve($id)
     }
 
     $booking->save();
-
+   
+NotificationController::sendPushNotification(
+            $booking->user_id, // Tenant ID
+            'Booking Confirmed! ✅',
+            'Your booking request for "' . $booking->apartment->title . '" has been approved.'
+        );
     return response()->json([
         'message' => 'Booking approved successfully'
     ]);
 }
+
 
 public function reject($id)
 {
@@ -201,48 +267,13 @@ public function reject($id)
     $booking->requested_start_date = null;
     $booking->requested_end_date = null;
     $booking->save();
+    NotificationController::sendPushNotification(
+            $booking->user_id, 
+            'Booking Rejected ❌',
+            'Sorry, your booking request for "' . $booking->apartment->title . '" was not accepted.'
+        );
     return response()->json([
         'message' => 'Booking rejected successfully'
-    ]);
-}
-public function updateStatus(Request $request, $id)
-{
-    $booking = Booking::findOrFail($id);
-    $oldStatus = $booking->status;
-    $newStatus = $request->status;
-    // Update the status in database
-    $booking->update(['status' => $newStatus]);
-
-    // Send notification only if status has actually changed
-    if ($oldStatus != $newStatus) {
-        $user = User::find($booking->user_id);
-
-        if ($user && $user->fcm_token) {
-            $firebaseService = new FirebaseService();
-            
-            $title = "Booking Update";
-            
-            // Task: Set different body message for each status
-            $body = match ($newStatus) {
-                'accepted' => "Great news! Your booking has been accepted.",
-                'rejected' => "We are sorry, your booking has been rejected.",
-                'pending'  => "Your booking is now under review.",
-                'canceled' => "Your booking has been successfully canceled.",
-                default    => "Your booking status is now: " . $newStatus,
-            };
-            
-            $data = [
-                'booking_id' => (string)$booking->id,
-                'status' => $newStatus,
-            ];
-
-            $firebaseService->sendNotification($user->fcm_token, $title, $body, $data);
-        }
-    }
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Booking updated and notification sent'
     ]);
 }
 

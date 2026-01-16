@@ -51,6 +51,7 @@ public function register(RegisterRequest $request)
     $request->validate([
         'phone' => 'required|string',
         'password' => 'required|string',
+        'fcm_token' => 'nullable|string',
         // 'role' => 'required|in:tenant,owner',
     ]);
 
@@ -74,7 +75,10 @@ public function register(RegisterRequest $request)
             'message' => 'Your account is rejected.'
         ], 403);
     }
-
+if ($request->has('fcm_token')) {
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+    }
  
     $token = $user->createToken('authToken')->plainTextToken;
 
@@ -83,7 +87,9 @@ public function register(RegisterRequest $request)
         'user' => [
             'id' => $user->id,
             'phone' => $user->phone,
-            // 'role' => $user->role,
+           // 'role' => $user->role,
+           'role' => $user->role ?? 'tenant',
+           'fcm_token' => $user->fcm_token,
             'created_at' => $user->created_at,
         ],
         'access_token' => $token,
@@ -96,6 +102,7 @@ public function register(RegisterRequest $request)
     
     public function logout(Request $request)
     {
+        
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([

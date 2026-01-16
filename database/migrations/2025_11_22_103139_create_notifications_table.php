@@ -6,23 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-          Schema::create('auths', function (Blueprint $table) {
+        Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
+            // ربط الإشعار بالمستخدم (صاحب الحجز مثلاً)
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            
+            $table->string('title'); // عنوان الإشعار (مثلاً: تم قبول حجزك)
+            $table->text('body');    // نص الإشعار
+            $table->boolean('is_read')->default(false); // هل قرأه المستخدم في التطبيق؟
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('notifications');

@@ -2,9 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
-    //
+    use HasFactory;
+
+    // الحقول المسموح بتعبئتها
+    protected $fillable = [
+        'user_id',
+        'title',
+        'body',
+        'is_read' // اختياري: لمعرفة إذا المستخدم فتح الإشعار أم لا
+    ];
+
+    // علاقة مع المستخدم (كل إشعار ينتمي لمستخدم)
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

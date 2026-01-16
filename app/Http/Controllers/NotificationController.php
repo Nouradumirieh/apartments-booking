@@ -2,64 +2,87 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Notification;
+use App\Models\User;
+use App\Models\Notification as NotificationModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log; // Fixed the 'Log' undefined type issue
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification as FirebaseNotification;
 
 class NotificationController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Test function to verify the notification setup
      */
-    public function index()
+    public function testNotification($userId)
     {
-        //
+        $user = User::find($userId);
+
+        if (!$user || empty($user->fcm_token)) {
+            return response()->json(['error' => 'User not found or has no FCM token'], 404);
+        }
+
+        try {
+            // Precise path based on your storage structure
+            $credentialsPath = storage_path('app/Firebase/firebase_credentials.json');
+
+            if (!file_exists($credentialsPath)) {
+                return response()->json(['error' => 'JSON credentials file not found'], 500);
+            }
+
+            $factory = (new Factory)->withServiceAccount($credentialsPath);
+            $messaging = $factory->createMessaging();
+
+            $notification = FirebaseNotification::create('Test Success!', 'Hello ' . $user->name . ', your notifications are working!');
+            $message = CloudMessage::withTarget('token', $user->fcm_token)
+                ->withNotification($notification);
+
+            $messaging->send($message);
+
+            return response()->json(['success' => 'Notification sent successfully to ' . $user->phone]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Firebase Error: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
-     * Show the form for creating a new resource.
+     * General static function to be called from other controllers (e.g., BookingController)
      */
-    public function create()
+    public static function sendPushNotification($userId, $title, $body)
     {
-        //
-    }
+        $user = User::find($userId);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        if (!$user || !$user->fcm_token) {
+            Log::warning("Notification failed: User $userId not found or missing FCM token.");
+            return false;
+        }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Notification $notification)
-    {
-        //
-    }
+        try {
+            $credentialsPath = storage_path('app/Firebase/firebase_credentials.json');
+            
+            $factory = (new Factory)->withServiceAccount($credentialsPath);
+            $messaging = $factory->createMessaging();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Notification $notification)
-    {
-        //
-    }
+            $notification = FirebaseNotification::create($title, $body);
+            
+            $message = CloudMessage::withTarget('token', $user->fcm_token)
+                ->withNotification($notification);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Notification $notification)
-    {
-        //
-    }
+            $messaging->send($message);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Notification $notification)
-    {
-        //
+            // Save notification log in the database for the user's notification center
+            NotificationModel::create([
+                'user_id' => $user->id,
+                'title' => $title,
+                'body' => $body,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Firebase Error in sendPushNotification: " . $e->getMessage());
+            return false;
+        }
     }
 }
